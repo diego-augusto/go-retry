@@ -1,13 +1,24 @@
 name: GitHub Actions Demo
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 on: [push]
 
 jobs:
-  Explore-GitHub-Actions:
+  run:
     runs-on: ubuntu-latest
     steps:
+    - name: checkout 
+      uses: actions/checkout@v4
+
+    - name: setp
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.22.x'
+
+    - name: test coverage
+      run: go test -json > result.json
+
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4.0.1
       env:
         token: ${{ secrets.CODECOV_TOKEN }}
-        slug: diego-augusto/go-retry
+
+
