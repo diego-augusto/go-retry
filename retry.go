@@ -5,22 +5,27 @@ import (
 	"net/http"
 )
 
-type retriableRoudnTriper struct {
+type retriableRoundTripper struct {
 	rt    http.RoundTripper
 	times int
 }
 
-func New(times int, rt http.RoundTripper) http.RoundTripper {
-	if rt == nil {
-		rt = http.DefaultTransport
+func New(options ...optFunc) *retriableRoundTripper {
+
+	rrt := &retriableRoundTripper{}
+
+	for _, o := range options {
+		o(rrt)
 	}
-	return retriableRoudnTriper{
-		rt:    rt,
-		times: times,
+
+	if rrt.rt == nil {
+		rrt.rt = http.DefaultTransport
 	}
+
+	return rrt
 }
 
-func (r retriableRoudnTriper) RoundTrip(request *http.Request) (*http.Response, error) {
+func (r retriableRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
 
 	var response *http.Response
 	var err error

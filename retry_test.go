@@ -52,7 +52,7 @@ func Test_RoundTrip(t *testing.T) {
 			}
 
 			client := http.Client{
-				Transport: goretry.New(1, mock),
+				Transport: goretry.New(goretry.WithTime(1), goretry.WithRoudnTriper(mock)),
 			}
 
 			req, _ := http.NewRequest(http.MethodGet, "http://www.github.com", nil)
@@ -75,7 +75,7 @@ func Test_RoundTrip(t *testing.T) {
 func Test_Default(t *testing.T) {
 
 	client := http.Client{
-		Transport: goretry.New(1, nil),
+		Transport: goretry.New(goretry.WithTime(1)),
 	}
 
 	req, _ := http.NewRequest(http.MethodGet, "http://www.github.com", nil)
