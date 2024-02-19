@@ -1,10 +1,11 @@
-package goretry
+package goretry_test
 
 import (
 	"errors"
 	"net/http"
 	"testing"
 
+	goretry "github.com/diego-augusto/go-retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -51,7 +52,7 @@ func Test_RoundTrip(t *testing.T) {
 			}
 
 			client := http.Client{
-				Transport: New(1, mock),
+				Transport: goretry.New(1, mock),
 			}
 
 			req, _ := http.NewRequest(http.MethodGet, "http://www.github.com", nil)
@@ -69,4 +70,20 @@ func Test_RoundTrip(t *testing.T) {
 			assert.Equal(t, tc.wantRespose.StatusCode, resp.StatusCode)
 		})
 	}
+}
+
+func Test_Default(t *testing.T) {
+
+	client := http.Client{
+		Transport: goretry.New(1, nil),
+	}
+
+	req, _ := http.NewRequest(http.MethodGet, "http://www.github.com", nil)
+	require.NotNil(t, req)
+
+	resp, err := client.Do(req)
+
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
 }
