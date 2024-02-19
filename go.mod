@@ -1,4 +1,4 @@
-module go-retry
+module github.com/diego-augusto/go-retry
 
 go 1.22.0
 
