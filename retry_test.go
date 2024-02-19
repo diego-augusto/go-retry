@@ -11,10 +11,12 @@ import (
 )
 
 type mockDefaultTransport struct {
+	called int
 	MockFn func(*http.Request) (*http.Response, error)
 }
 
-func (m mockDefaultTransport) RoundTrip(request *http.Request) (*http.Response, error) {
+func (m *mockDefaultTransport) RoundTrip(request *http.Request) (*http.Response, error) {
+	m.called++
 	return m.MockFn(request)
 }
 
@@ -52,7 +54,7 @@ func Test_RoundTrip(t *testing.T) {
 			}
 
 			client := http.Client{
-				Transport: goretry.New(goretry.WithTime(1), goretry.WithRoudnTriper(mock)),
+				Transport: goretry.New(goretry.WithRoudnTriper(&mock)),
 			}
 
 			req, _ := http.NewRequest(http.MethodGet, "http://www.github.com", nil)
@@ -75,7 +77,7 @@ func Test_RoundTrip(t *testing.T) {
 func Test_Default(t *testing.T) {
 
 	client := http.Client{
-		Transport: goretry.New(goretry.WithTime(1)),
+		Transport: goretry.New(),
 	}
 
 	req, _ := http.NewRequest(http.MethodGet, "http://www.github.com", nil)
@@ -86,4 +88,29 @@ func Test_Default(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
+}
+
+func Test_Times(t *testing.T) {
+
+	wantTime := 50
+	wantError := errors.New("random network error")
+
+	mock := mockDefaultTransport{
+		MockFn: func(r *http.Request) (*http.Response, error) {
+			return nil, wantError
+		},
+	}
+
+	client := http.Client{
+		Transport: goretry.New(goretry.WithRoudnTriper(&mock), goretry.WithTime(wantTime)),
+	}
+
+	req, _ := http.NewRequest(http.MethodGet, "http://www.github.com", nil)
+	require.NotNil(t, req)
+
+	resp, err := client.Do(req)
+
+	require.Nil(t, resp)
+	require.Error(t, err)
+	assert.Equal(t, wantTime, mock.called)
 }

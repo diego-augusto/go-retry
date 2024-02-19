@@ -12,7 +12,9 @@ type retriableRoundTripper struct {
 
 func New(options ...optFunc) *retriableRoundTripper {
 
-	rrt := &retriableRoundTripper{}
+	rrt := &retriableRoundTripper{
+		times: 1,
+	}
 
 	for _, o := range options {
 		o(rrt)
