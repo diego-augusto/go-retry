@@ -15,3 +15,9 @@ func WithRoudnTriper(rt http.RoundTripper) optFunc {
 		rrt.rt = rt
 	}
 }
+
+func WithStatusCode(statusCodes int) optFunc {
+	return func(rrt *retriableRoundTripper) {
+		rrt.statusCode = statusCodes
+	}
+}
