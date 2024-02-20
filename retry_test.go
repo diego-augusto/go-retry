@@ -7,7 +7,6 @@ import (
 
 	goretry "github.com/diego-augusto/go-retry"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type mockDefaultTransport struct {
@@ -58,17 +57,17 @@ func Test_RoundTrip(t *testing.T) {
 			}
 
 			req, _ := http.NewRequest(http.MethodGet, "http://www.github.com", nil)
-			require.NotNil(t, req)
+			assert.NotNil(t, req)
 
 			resp, err := client.Do(req)
 
 			if tc.wantErr != nil {
-				require.Error(t, err)
+				assert.Error(t, err)
 				assert.ErrorAs(t, err, &tc.wantErr)
 				return
 			}
 
-			require.NoError(t, err)
+			assert.NoError(t, err)
 			assert.Equal(t, tc.wantRespose.StatusCode, resp.StatusCode)
 		})
 	}
@@ -81,11 +80,11 @@ func Test_Default(t *testing.T) {
 	}
 
 	req, _ := http.NewRequest(http.MethodGet, "http://www.github.com", nil)
-	require.NotNil(t, req)
+	assert.NotNil(t, req)
 
 	resp, err := client.Do(req)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 }
@@ -106,11 +105,54 @@ func Test_Times(t *testing.T) {
 	}
 
 	req, _ := http.NewRequest(http.MethodGet, "http://www.github.com", nil)
-	require.NotNil(t, req)
+	assert.NotNil(t, req)
 
 	resp, err := client.Do(req)
 
-	require.Nil(t, resp)
-	require.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Error(t, err)
 	assert.Equal(t, wantTime, mock.called)
+}
+
+func Test_WithStatusCode(t *testing.T) {
+
+	testCases := []struct {
+		name    string
+		url     string
+		wantErr error
+	}{
+		{
+			name:    "invalid status code",
+			url:     "https://mock.httpstatus.io/500",
+			wantErr: goretry.ErrInvalidStatusCode,
+		},
+		{
+			name: "valid status code",
+			url:  "https://mock.httpstatus.io/200",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			client := http.Client{
+				Transport: goretry.New(goretry.WithStatusCode(http.StatusInternalServerError)),
+			}
+
+			req, err := http.NewRequest(http.MethodGet, tc.url, nil)
+			assert.NotNil(t, req)
+			assert.Nil(t, err)
+
+			resp, err := client.Do(req)
+
+			if tc.wantErr != nil {
+				assert.Error(t, err)
+				assert.Nil(t, resp)
+				assert.ErrorIs(t, err, goretry.ErrInvalidStatusCode)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.NotNil(t, resp)
+		})
+	}
 }

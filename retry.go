@@ -5,15 +5,19 @@ import (
 	"net/http"
 )
 
+var ErrInvalidStatusCode = errors.New("invalid status code")
+
 type retriableRoundTripper struct {
-	rt    http.RoundTripper
-	times int
+	rt         http.RoundTripper
+	times      int
+	statusCode int
 }
 
 func New(options ...optFunc) *retriableRoundTripper {
 
 	rrt := &retriableRoundTripper{
-		times: 1,
+		times:      1,
+		statusCode: http.StatusBadRequest,
 	}
 
 	for _, o := range options {
@@ -37,10 +41,12 @@ func (r retriableRoundTripper) RoundTrip(request *http.Request) (*http.Response,
 		if err != nil {
 			continue
 		}
-		if response.StatusCode > 399 {
-			err = errors.New("invalid status code")
+
+		if response.StatusCode >= r.statusCode {
+			err = ErrInvalidStatusCode
 			continue
 		}
+
 		break
 	}
 
