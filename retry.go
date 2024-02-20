@@ -33,22 +33,27 @@ func New(options ...optFunc) *retriableRoundTripper {
 
 func (r retriableRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
 
-	var response *http.Response
+	var resp *http.Response
 	var err error
+	var errs []error
 
 	for i := 0; i < r.times; i++ {
-		response, err = r.rt.RoundTrip(request)
+		resp, err = r.rt.RoundTrip(request)
 		if err != nil {
+			errs = append(errs, err)
 			continue
 		}
-
-		if response.StatusCode >= r.statusCode {
+		if resp.StatusCode >= r.statusCode {
 			err = ErrInvalidStatusCode
+			errs = append(errs, err)
 			continue
 		}
-
 		break
 	}
 
-	return response, err
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
+	}
+
+	return resp, nil
 }
